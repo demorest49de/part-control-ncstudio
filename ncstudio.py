@@ -15,7 +15,7 @@ part_limit: int = 20
 stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 
-
+# ncstudio part control program
 def get_part_limit() -> int:
     with limit_lock:
         return part_limit
