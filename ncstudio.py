@@ -112,10 +112,13 @@ def show_current_limit(
 
 def read_part_count(window: UIAWrapper) -> int:
     elements: list[UIAWrapper] = window.descendants()
+    print(f"elements: {elements}")
+    if not elements:
+        raise RuntimeError("ncstudio window not found")
 
     for index, element in enumerate(elements):
         text: str = element.window_text().strip()
-        # print(f"{index}: {text}")
+        print(f"{index}: {text}")
         if text.lower() in ("part count:", "part count:"):
             next_index: int = index + 1
             # print(f"field: {text}")
@@ -181,19 +184,21 @@ def create_tray_image() -> Image.Image:
     image: Image.Image = Image.new(
         mode="RGBA",
         size=(64, 64),
-        color="white",
+        # color="white",
+
     )
 
     draw: ImageDraw.Draw = ImageDraw.Draw(image)
 
-    draw.rectangle(
-        xy=(8, 8, 56, 56),
-        fill="black",
-    )
+    # draw.rectangle(
+    #     xy=(8, 8, 56, 56),
+    #     fill="black",
+    # )
 
     draw.text(
         xy=(19, 20),
-        text="NC check",
+        text="NC",
+        font_size=36,
         fill="white",
     )
 
