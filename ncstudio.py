@@ -12,6 +12,7 @@ from pywinauto.controls.uiawrapper import UIAWrapper
 CHECK_INTERVAL: Final[float] = 3.0
 
 part_limit: int = 100
+part_count: int = 0
 stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 
@@ -57,7 +58,7 @@ def show_limit_editor() -> None:
         "Введите количество деталей:",
         initialvalue=current_limit,
         minvalue=1,
-        maxvalue=200,
+        maxvalue=100,
         parent=root,
     )
 
@@ -145,12 +146,12 @@ def find_ncstudio_window() -> UIAWrapper:
 
 
 def monitor_ncstudio() -> None:
+    global part_count
     blocked: bool = False
     while not stop_event.is_set():
         try:
             window: UIAWrapper = find_ncstudio_window()
-            part_count: int = read_part_count(window)
-            # part_count: int = 2
+            part_count = read_part_count(window)
             limit: int = get_part_limit()
 
             print(
@@ -235,7 +236,7 @@ def main() -> None:
     tray_icon: Icon = Icon(
         name="ncstudio_part_counter",
         icon=create_tray_image(),
-        title="Контроль деталей ncstudio",
+        title=f"Количество сделанных листов: {part_count}\nТекущий лимит листов: {get_part_limit()}",
         menu=tray_menu,
     )
 
