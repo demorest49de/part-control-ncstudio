@@ -9,20 +9,23 @@ from pystray import Icon, MenuItem
 from pywinauto import Desktop
 from pywinauto.controls.uiawrapper import UIAWrapper
 
-CHECK_INTERVAL: Final[float] = 3.0
+CHECK_INTERVAL: Final[float] = 10.0
+ERROR_INTERVAL: Final[float] = 60.0
 
 part_limit: int = 100
 part_count: int = 0
 stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
+part_count_lock: threading.Lock = threading.Lock()
 
 
 def get_part_limit() -> int:
     with limit_lock:
         return part_limit
 
+
 def get_part_count() -> int:
-    with limit_lock:
+    with part_count_lock:
         return part_count
 
 
@@ -31,6 +34,13 @@ def set_part_limit(new_limit: int) -> None:
 
     with limit_lock:
         part_limit = new_limit
+
+
+def set_part_count(new_count: int) -> None:
+    global part_count
+
+    with part_count_lock:
+        part_count = new_count
 
 
 def show_limit_warning(count: int, limit: int) -> None:
@@ -158,7 +168,8 @@ def monitor_ncstudio() -> None:
     while not stop_event.is_set():
         try:
             window: UIAWrapper = find_ncstudio_window()
-            part_count = read_part_count(window)
+            current_part_count: int = read_part_count(window)
+            set_part_count(current_part_count)
             limit: int = get_part_limit()
 
             print(
@@ -181,7 +192,13 @@ def monitor_ncstudio() -> None:
         except Exception as error:
             print(f"Error: {error}")
 
-        stop_event.wait(CHECK_INTERVAL)
+            if stop_event.wait(ERROR_INTERVAL):
+                break
+
+            continue
+
+        if stop_event.wait(CHECK_INTERVAL):
+            break
 
 
 def create_tray_image() -> Image.Image:
