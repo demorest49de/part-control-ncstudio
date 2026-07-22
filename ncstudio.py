@@ -21,6 +21,10 @@ def get_part_limit() -> int:
     with limit_lock:
         return part_limit
 
+def get_part_count() -> int:
+    with limit_lock:
+        return part_count
+
 
 def set_part_limit(new_limit: int) -> None:
     global part_limit
@@ -118,7 +122,7 @@ def read_part_count(window: UIAWrapper) -> int:
 
     for index, element in enumerate(elements):
         text: str = element.window_text().strip()
-        print(f"{index}: {text}")
+        # print(f"{index}: {text}")
         if text.lower() in ("part count:", "part count:"):
             next_index: int = index + 1
             # print(f"field: {text}")
@@ -241,7 +245,7 @@ def main() -> None:
     tray_icon: Icon = Icon(
         name="ncstudio_part_counter",
         icon=create_tray_image(),
-        title=f"Количество сделанных листов: {part_count}\nТекущий лимит листов: {get_part_limit()}",
+        title=f"Количество сделанных листов: {get_part_count()}\nТекущий лимит листов: {get_part_limit()}",
         menu=tray_menu,
     )
 
