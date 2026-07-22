@@ -11,7 +11,7 @@ from pywinauto.controls.uiawrapper import UIAWrapper
 
 CHECK_INTERVAL: Final[float] = 3.0
 
-part_limit: int = 20
+part_limit: int = 100
 stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 
@@ -114,10 +114,10 @@ def read_part_count(window: UIAWrapper) -> int:
 
     for index, element in enumerate(elements):
         text: str = element.window_text().strip()
-        print(f"{index}: {text}")
+        # print(f"{index}: {text}")
         if text.lower() in ("part count:", "part count:"):
             next_index: int = index + 1
-            print(f"field: {text}")
+            # print(f"field: {text}")
             if next_index >= len(elements):
                 raise RuntimeError("index out of bounds")
 
@@ -133,24 +133,24 @@ def read_part_count(window: UIAWrapper) -> int:
     raise RuntimeError("part count field not found")
 
 
-# def find_ncstudio_window() -> UIAWrapper:
-#     desktop: Desktop = Desktop(backend="uia")
-#
-#     for window in desktop.windows():
-#         title: str = window.window_text()
-#         if "NcStudio" in title or "NCStudio" in title:
-#             return window
-#
-#     raise RuntimeError("ncstudio window not found")
+def find_ncstudio_window() -> UIAWrapper:
+    desktop: Desktop = Desktop(backend="uia")
+
+    for window in desktop.windows():
+        title: str = window.window_text()
+        if "NcStudio" in title or "NCStudio" in title:
+            return window
+
+    raise RuntimeError("ncstudio window not found")
 
 
 def monitor_ncstudio() -> None:
     blocked: bool = False
     while not stop_event.is_set():
         try:
-            # window: UIAWrapper = find_ncstudio_window()
-            # part_count: int = read_part_count(window)
-            part_count: int = 2
+            window: UIAWrapper = find_ncstudio_window()
+            part_count: int = read_part_count(window)
+            # part_count: int = 2
             limit: int = get_part_limit()
 
             print(
