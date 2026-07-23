@@ -10,7 +10,7 @@ from pywinauto import Desktop
 from pywinauto.controls.uiawrapper import UIAWrapper
 
 CHECK_INTERVAL: Final[float] = 10.0
-ERROR_INTERVAL: Final[float] = 20.0
+ERROR_INTERVAL: Final[float] = 10.0
 
 part_limit: int = 100
 part_count: int = 0
@@ -156,7 +156,8 @@ def find_ncstudio_window() -> UIAWrapper:
 
     for window in desktop.windows():
         title: str = window.window_text()
-        if "NcStudio" in title or "NCStudio" in title:
+        print(f"Window: {title!r}")
+        if "ncstudio" in title.lower():
             return window
 
     raise RuntimeError("ncstudio window not found")
