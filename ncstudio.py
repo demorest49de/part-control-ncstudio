@@ -157,7 +157,7 @@ def find_ncstudio_window() -> UIAWrapper:
     for window in desktop.windows():
         title: str = window.window_text()
         print(f"Window: {title!r}")
-        if "ncstudio" in title.lower():
+        if "ncstudio" in title.lower() and "config" in title.lower():
             return window
 
     raise RuntimeError("ncstudio window not found")
