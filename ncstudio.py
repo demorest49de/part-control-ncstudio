@@ -10,7 +10,7 @@ from pywinauto import Desktop
 from pywinauto.controls.uiawrapper import UIAWrapper
 
 CHECK_INTERVAL: Final[float] = 10.0
-ERROR_INTERVAL: Final[float] = 60.0
+ERROR_INTERVAL: Final[float] = 20.0
 
 part_limit: int = 100
 part_count: int = 0
@@ -126,7 +126,7 @@ def show_current_limit(
 
 def read_part_count(window: UIAWrapper) -> int:
     elements: list[UIAWrapper] = window.descendants()
-    print(f"elements: {elements}")
+    # print(f"elements: {elements}")
     if not elements:
         raise RuntimeError("ncstudio window not found")
 
@@ -162,7 +162,7 @@ def find_ncstudio_window() -> UIAWrapper:
     raise RuntimeError("ncstudio window not found")
 
 
-def monitor_ncstudio() -> None:
+def monitor_ncstudio(tray_icon: Icon) -> None:
     global part_count
     blocked: bool = False
     while not stop_event.is_set():
@@ -171,21 +171,25 @@ def monitor_ncstudio() -> None:
             current_part_count: int = read_part_count(window)
             set_part_count(current_part_count)
             limit: int = get_part_limit()
+            tray_icon.title = (
+                f"Количество сделанных листов: {current_part_count}\n"
+                f"Текущий лимит листов: {limit}"
+            )
 
             print(
-                f"Part Count: {part_count}, "
+                f"Part Count: {current_part_count}, "
                 f"Limit: {limit}"
             )
 
-            if part_count >= part_limit and not blocked:
+            if current_part_count >= limit and not blocked:
                 show_limit_warning(
-                    part_count,
+                    current_part_count,
                     limit
                 )
 
                 blocked = True
 
-            if part_count < part_limit:
+            if current_part_count < limit:
                 blocked = False
 
 
@@ -235,13 +239,6 @@ def exit_program(
 
 
 def main() -> None:
-    monitor_thread: threading.Thread = threading.Thread(
-        target=monitor_ncstudio,
-        daemon=True,
-    )
-
-    monitor_thread.start()
-
     tray_menu: pystray.Menu = pystray.Menu(
         MenuItem(
             text="Задать лимит",
@@ -262,9 +259,20 @@ def main() -> None:
     tray_icon: Icon = Icon(
         name="ncstudio_part_counter",
         icon=create_tray_image(),
-        title=f"Количество сделанных листов: {get_part_count()}\nТекущий лимит листов: {get_part_limit()}",
+        title=(
+            f"Количество сделанных листов: {get_part_count()}\n"
+            f"Текущий лимит листов: {get_part_limit()}"
+        ),
         menu=tray_menu,
     )
+
+    monitor_thread: threading.Thread = threading.Thread(
+        target=monitor_ncstudio,
+        args=(tray_icon,),
+        daemon=True,
+    )
+
+    monitor_thread.start()
 
     tray_icon.run()
 
