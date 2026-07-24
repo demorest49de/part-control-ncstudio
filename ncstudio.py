@@ -13,19 +13,22 @@ CHECK_INTERVAL: Final[float] = 10.0
 ERROR_INTERVAL: Final[float] = 10.0
 
 part_limit: int = 100
-part_count: int = 0
+# todo здесь поменять
+# part_count: int = 0
+part_count: int = 2
 monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
 
 # set_part_limit при установке не срабатывает  отображается
-# разная цифра лимита в инфо по лимиту
+# разная цифра лимита в инфо по лимиту - ✔
 
-# ворнинг должен отображатся первым слоем
+# ворнинг должен отображатся первым слоем - ✔
 
 # сохранять данные
 # о лимитах внутри файла программы те что бы был 1 файл на всю
 # программу
+
 # название файла программы с датастемпом что бы была история
 # проверить такую возможность
 
@@ -69,7 +72,7 @@ def show_limit_warning(count: int, limit: int) -> None:
     root.destroy()
 
 
-def show_limit_editor() -> None:
+def show_limit_editor(icon: Icon) -> None:
     current_limit: int = get_part_limit()
 
     root: tk.Tk = tk.Tk()
@@ -95,7 +98,16 @@ def show_limit_editor() -> None:
             parent=root,
         )
 
+        update_tray_title(tray_icon=icon)
+
     root.destroy()
+
+
+def update_tray_title(tray_icon: Icon) -> None:
+    tray_icon.title = (
+        f"Количество сделанных листов: {get_part_count()}\n"
+        f"Текущий лимит листов: {get_part_limit()}"
+    )
 
 
 def open_limit_editor(
@@ -104,6 +116,7 @@ def open_limit_editor(
 ) -> None:
     threading.Thread(
         target=show_limit_editor,
+        args=(icon,),
         daemon=True,
     ).start()
 
@@ -147,7 +160,6 @@ def read_part_count(window: UIAWrapper) -> int:
             next_index: int = index + 1
             # print(f"field: {text}")
             if next_index >= len(elements):
-
                 raise RuntimeError("index out of bounds")
 
             value_text: str = elements[next_index].window_text().strip()
@@ -179,14 +191,13 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
     blocked: bool = False
     while not monitor_stop_event.is_set():
         try:
-            window: UIAWrapper = find_ncstudio_window()
-            current_part_count: int = read_part_count(window)
-            set_part_count(current_part_count)
+            # todo здесь поменять
+            # window: UIAWrapper = find_ncstudio_window()
+            # current_part_count: int = read_part_count(window)
+            # set_part_count(current_part_count)
+            current_part_count: int = get_part_count()
             limit: int = get_part_limit()
-            tray_icon.title = (
-                f"Количество сделанных листов: {get_part_count()}\n"
-                f"Текущий лимит листов: {get_part_limit()}"
-            )
+            update_tray_title(tray_icon)
 
             print(
                 f"Part Count: {current_part_count}, "
@@ -250,8 +261,35 @@ def exit_program(
     icon.stop()
 
 
+def increment_part_count() -> int:
+    global part_count
+
+    with part_count_lock:
+        part_count += 1
+        return part_count
+
+
+def increase_test_count(
+        icon: Icon,
+        item: MenuItem,
+) -> None:
+    current_count: int = increment_part_count()
+    limit: int = get_part_limit()
+
+    update_tray_title(icon)
+
+    print(
+        f"Test Part Count: {current_count}, "
+        f"Limit: {limit}"
+    )
+
 def main() -> None:
     tray_menu: pystray.Menu = pystray.Menu(
+
+        MenuItem(
+            text="Test +1 increment",
+            action=increase_test_count
+        ),
         MenuItem(
             text="Задать лимит",
             action=open_limit_editor,
