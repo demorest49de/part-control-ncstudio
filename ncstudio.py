@@ -14,7 +14,7 @@ ERROR_INTERVAL: Final[float] = 10.0
 
 part_limit: int = 100
 part_count: int = 0
-stop_event: threading.Event = threading.Event()
+monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
 
@@ -166,7 +166,7 @@ def find_ncstudio_window() -> UIAWrapper:
 def monitor_ncstudio(tray_icon: Icon) -> None:
     global part_count
     blocked: bool = False
-    while not stop_event.is_set():
+    while not monitor_stop_event.is_set():
         try:
             window: UIAWrapper = find_ncstudio_window()
             current_part_count: int = read_part_count(window)
@@ -197,12 +197,12 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
         except Exception as error:
             print(f"Error: {error}")
 
-            if stop_event.wait(ERROR_INTERVAL):
+            if monitor_stop_event.wait(ERROR_INTERVAL):
                 break
 
             continue
 
-        if stop_event.wait(CHECK_INTERVAL):
+        if monitor_stop_event.wait(CHECK_INTERVAL):
             break
 
 
@@ -235,7 +235,7 @@ def exit_program(
         icon: Icon,
         item: MenuItem,
 ) -> None:
-    stop_event.set()
+    monitor_stop_event.set()
     icon.stop()
 
 
