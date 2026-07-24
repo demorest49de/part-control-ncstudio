@@ -18,6 +18,12 @@ monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
 
+# set_part_limit при установке не срабатывает  отображается
+# разная цифра лимита в инфо по лимиту
+
+# ворнинг должен отображатся первым слоем
+
+
 
 def get_part_limit() -> int:
     with limit_lock:
@@ -137,6 +143,7 @@ def read_part_count(window: UIAWrapper) -> int:
             next_index: int = index + 1
             # print(f"field: {text}")
             if next_index >= len(elements):
+
                 raise RuntimeError("index out of bounds")
 
             value_text: str = elements[next_index].window_text().strip()
@@ -173,8 +180,8 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
             set_part_count(current_part_count)
             limit: int = get_part_limit()
             tray_icon.title = (
-                f"Количество сделанных листов: {current_part_count}\n"
-                f"Текущий лимит листов: {limit}"
+                f"Количество сделанных листов: {get_part_count()}\n"
+                f"Текущий лимит листов: {get_part_limit()}"
             )
 
             print(
@@ -187,7 +194,7 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
                     current_part_count,
                     limit
                 )
-
+                set_part_count(0)
                 blocked = True
 
             if current_part_count < limit:
