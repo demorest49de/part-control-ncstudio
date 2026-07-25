@@ -14,8 +14,8 @@ ERROR_INTERVAL: Final[float] = 10.0
 
 part_limit: int = 100
 # todo здесь поменять
-# part_count: int = 0
-part_count: int = 2
+part_count: int = 0
+# part_count: int = 2
 monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
@@ -190,10 +190,10 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
     while not monitor_stop_event.is_set():
         try:
             # todo здесь поменять
-            # window: UIAWrapper = find_ncstudio_window()
-            # current_part_count: int = read_part_count(window)
-            # set_part_count(current_part_count)
-            current_part_count: int = get_part_count()
+            window: UIAWrapper = find_ncstudio_window()
+            current_part_count: int = read_part_count(window)
+            set_part_count(current_part_count)
+            # current_part_count: int = get_part_count()
             limit: int = get_part_limit()
             update_tray_title(tray_icon)
 
@@ -208,6 +208,7 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
                     limit
                 )
                 set_part_count(0)
+                set_part_limit(100)
                 blocked = True
 
             if current_part_count < limit:
