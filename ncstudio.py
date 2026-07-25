@@ -1,4 +1,5 @@
-
+import sys
+from pathlib import Path
 import threading
 import tkinter as tk
 from tkinter import messagebox, simpledialog
@@ -29,6 +30,11 @@ part_count_lock: threading.Lock = threading.Lock()
 # - лимиты
 # - название файла программы с датастемпом что бы была история
 
+def get_program_directory() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+
+    return Path(__file__).resolve().parent
 
 def get_part_limit() -> int:
     with limit_lock:
@@ -286,8 +292,7 @@ def increase_test_count(
         f"Limit: {limit}"
     )
 
-
-def main() -> None:
+def start_ui_menu()-> Icon:
     tray_menu: pystray.Menu = pystray.Menu(
 
         MenuItem(
@@ -320,6 +325,13 @@ def main() -> None:
         menu=tray_menu,
     )
 
+    return tray_icon
+
+def main() -> None:
+
+    print(f"path: {get_program_directory()}")
+    tray_icon: Icon = start_ui_menu()
+
     monitor_thread: threading.Thread = threading.Thread(
         target=monitor_ncstudio,
         args=(tray_icon,),
@@ -330,6 +342,7 @@ def main() -> None:
 
     tray_icon.run()
 
+    print(f"path: {get_program_directory()}")
 
 if __name__ == "__main__":
     main()
