@@ -1,3 +1,4 @@
+
 import threading
 import tkinter as tk
 from tkinter import messagebox, simpledialog
@@ -13,9 +14,7 @@ CHECK_INTERVAL: Final[float] = 10.0
 ERROR_INTERVAL: Final[float] = 10.0
 
 part_limit: int = 100
-# todo здесь поменять
 part_count: int = 0
-# part_count: int = 2
 monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
@@ -174,8 +173,9 @@ def read_part_count(window: UIAWrapper) -> int:
 
 
 def find_ncstudio_window() -> UIAWrapper:
-    # desktop: Desktop = Desktop(backend="uia")
-    desktop: Desktop = Desktop(backend="win32")
+    # todo здесь поменять
+    desktop: Desktop = Desktop(backend="uia")
+    # desktop: Desktop = Desktop(backend="win32")
 
     for window in desktop.windows():
         title: str = window.window_text()
