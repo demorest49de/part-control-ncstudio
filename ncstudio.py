@@ -20,6 +20,7 @@ monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
 
+
 # set_part_limit при установке не срабатывает  отображается
 # разная цифра лимита в инфо по лимиту - ✔
 
@@ -146,10 +147,10 @@ def show_current_limit(
 
 
 def read_part_count(window: UIAWrapper) -> int:
+    print(f"window: {window}")
     elements: list[UIAWrapper] = window.descendants()
-    # print(f"elements: {elements}")
     if not elements:
-        raise RuntimeError("ncstudio window not found")
+        raise RuntimeError(f"elements: {elements} are empty or not found")
 
     for index, element in enumerate(elements):
         text: str = element.window_text().strip()
@@ -173,7 +174,8 @@ def read_part_count(window: UIAWrapper) -> int:
 
 
 def find_ncstudio_window() -> UIAWrapper:
-    desktop: Desktop = Desktop(backend="uia")
+    # desktop: Desktop = Desktop(backend="uia")
+    desktop: Desktop = Desktop(backend="win32")
 
     for window in desktop.windows():
         title: str = window.window_text()
@@ -216,7 +218,9 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
 
 
         except Exception as error:
-            print(f"Error: {error}")
+            print(
+                f"Error: {type(error).__name__}: {error!r}"
+            )
 
             if monitor_stop_event.wait(ERROR_INTERVAL):
                 break
@@ -281,6 +285,7 @@ def increase_test_count(
         f"Test Part Count: {current_count}, "
         f"Limit: {limit}"
     )
+
 
 def main() -> None:
     tray_menu: pystray.Menu = pystray.Menu(

@@ -3,4 +3,4 @@
 /.idea
 /build
 /dist
-/NCStudioPartControl.spec
+/*.spec
