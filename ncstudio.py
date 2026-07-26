@@ -1,3 +1,4 @@
+from datetime import datetime
 import inspect
 import json
 import string
@@ -8,6 +9,7 @@ import threading
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 from typing import Final
+from typing import TypedDict
 
 import pystray
 from PIL import Image, ImageDraw
@@ -15,9 +17,15 @@ from pystray import Icon, MenuItem
 from pywinauto import Desktop
 from pywinauto.controls.uiawrapper import UIAWrapper
 
-type DataJson = dict[str, int | list[dict[str, int | str]]]
+class CompletedBatch(TypedDict):
+    date: str
+    limit: int
+    file_name: str
+
+type DataJson = dict[str, int | list[CompletedBatch]]
 
 CURRENT_PART_LIMIT: Final[string] = 'current_part_limit'
+BATCHES: Final[string] = 'batches'
 CHECK_INTERVAL: Final[float] = 5.0
 # ERROR_INTERVAL: Final[float] = 4.0
 
@@ -50,8 +58,8 @@ def get_program_directory() -> Path:
 def load_data_from_json() -> dict:
     if not DATA_FILE.exists():
         return {
-            CURRENT_PART_LIMIT: 100,
-            "batches": []
+            CURRENT_PART_LIMIT: 90,
+            BATCHES: []
         }
     with DATA_FILE.open("r", encoding="utf-8") as file:
         return json.load(file)
@@ -75,6 +83,18 @@ def load_current_part_limit() -> int:
     return load_data_from_json()[CURRENT_PART_LIMIT]
 
 
+def save_completed_batch(limit: int, file_name: str) -> None:
+    data: DataJson = load_data_from_json()
+
+    batch: CompletedBatch = {
+        "date": datetime.now().strftime("%d-%m-%Y %H:%M"),
+        "limit": limit,
+        "file_name": file_name,
+    }
+    data[BATCHES].append(batch)
+    save_data_to_json(data)
+
+
 def get_part_limit() -> int:
     with limit_lock:
         return part_limit
@@ -90,6 +110,8 @@ def set_part_limit(new_limit: int) -> None:
 
     with limit_lock:
         part_limit = new_limit
+
+    save_current_part_limit(new_limit)
 
 
 def set_part_count(new_count: int) -> None:
@@ -391,14 +413,16 @@ def start_ui_menu() -> Icon:
 
 
 def main() -> None:
-    set_part_limit(load_current_part_limit())
+
     print(
         f"line: {inspect.currentframe().f_lineno}, ",
         f"path: {get_program_directory()}"
     )
+
     print(
         f"line: {inspect.currentframe().f_lineno}, "
         f'ncstudio json - {load_data_from_json()}')
+
     tray_icon: Icon = start_ui_menu()
 
     monitor_thread: threading.Thread = threading.Thread(
