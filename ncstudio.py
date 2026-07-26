@@ -8,6 +8,7 @@ from pathlib import Path
 import threading
 import tkinter as tk
 from tkinter import messagebox, simpledialog
+from tkinter import scrolledtext
 from typing import Final
 from typing import TypedDict
 
@@ -95,10 +96,50 @@ def load_data_on_startup() -> None:
     set_part_limit(load_current_part_limit())
 
 
-def show_history() -> None:
-    print(
-        f"line: {inspect.currentframe().f_lineno}, "
-        f'')
+def show_completed_batches(
+        icon: Icon,
+        item: MenuItem,
+) -> None:
+    batches: list[CompletedBatch] = load_completed_batches()
+
+    window: tk.Tk = tk.Tk()
+    window.title("История партий")
+    window_width: int = 650
+    window_height: int = 400
+
+    screen_width: int = window.winfo_screenwidth()
+    screen_height: int = window.winfo_screenheight()
+
+    x: int = (screen_width - window_width) // 2
+    y: int = (screen_height - window_height) // 2
+
+    window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+    history_text: scrolledtext.ScrolledText = scrolledtext.ScrolledText(
+        window,
+        font=("Arial", 12),
+    )
+    history_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+    if not batches:
+        history_text.insert(tk.END, "История партий пуста")
+    else:
+        for batch in batches:
+            history_text.insert(
+                tk.END,
+                (
+                    f'{batch["date"]}: - '
+                    f'Лимит: {batch["limit"]} - '
+                    f'Имя файла: {batch["file_name"]}\n'
+                )
+            )
+
+    history_text.configure(state=tk.DISABLED)
+    window.mainloop()
+
+
+def load_completed_batches() -> list[CompletedBatch]:
+    return load_data_from_json()[BATCHES]
 
 
 def save_completed_batch() -> None:
@@ -427,7 +468,7 @@ def start_ui_menu() -> Icon:
         ),
         MenuItem(
             text="Показать историю",
-            action=show_history
+            action=show_completed_batches
         ),
         pystray.Menu.SEPARATOR,
         MenuItem(
