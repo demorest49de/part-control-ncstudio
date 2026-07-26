@@ -1,4 +1,5 @@
 import inspect
+import json
 import string
 import sys
 from operator import truediv
@@ -42,6 +43,19 @@ def get_program_directory() -> Path:
         return Path(sys.executable).resolve().parent
 
     return Path(__file__).resolve().parent
+
+
+def load_data() -> dict:
+    if not DATA_FILE.exists():
+        return {"batches": []}
+    with DATA_FILE.open("r", encoding="utf-8") as file:
+        return json.load(file)
+
+def save_data(data: dict) -> None:
+    with DATA_FILE.open("w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
+DATA_FILE: Final[Path] = get_program_directory() / "ncstudio_data.json"
 
 
 def get_part_limit() -> int:
