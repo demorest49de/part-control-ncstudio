@@ -260,8 +260,9 @@ def update_tray_title(tray_icon: Icon) -> None:
         f"Текущий лимит листов: {get_part_limit()}"
     )
     print(
-            f"line: {inspect.currentframe().f_lineno}, "
-            f' - {tray_icon.title}')
+        f"line: {inspect.currentframe().f_lineno}, "
+        f' - {tray_icon.title}')
+
 
 def open_limit_editor(
         icon: Icon,
@@ -301,7 +302,6 @@ def show_current_limit(
 
 
 def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
-
     elements: list[UIAWrapper] = window.descendants()
     if not elements:
         raise RuntimeError(f"elements: {elements} are empty or not found")
@@ -367,6 +367,7 @@ def set_ncstudio_file_name(window: UIAWrapper) -> None:
     title: str = window.window_text().strip()
     ncstudio_file_name = title.rsplit(" - ", 1)[-1].strip()
 
+
 def get_normal_menu() -> pystray.Menu:
     return pystray.Menu(
         # MenuItem(
@@ -393,19 +394,26 @@ def get_normal_menu() -> pystray.Menu:
         ),
     )
 
+
 def monitor_ncstudio(tray_icon: Icon) -> None:
     blocked: bool = False
+    exception_happened: bool = False
     menu: pystray.Menu = get_normal_menu()
     normal_tray_menu(tray_icon, menu)
     print(
-            f"line: {inspect.currentframe().f_lineno}, "
-            f' - {tray_icon.title}')
+        f"line: {inspect.currentframe().f_lineno}, "
+        f' - {tray_icon.title}')
     while not monitor_stop_event.is_set():
         try:
             window: UIAWrapper = find_ncstudio_window()
             # todo здесь поменять
             current_part_count: int = read_part_count_from_ncstudio(window)  # prod
-            current_part_count: int = part_count  # test
+            # current_part_count: int = part_count  # test
+
+            if exception_happened:
+                normal_tray_menu(tray_icon, menu)
+                exception_happened = False
+
             limit: int = get_part_limit()
             update_tray_title(tray_icon)
 
@@ -432,6 +440,7 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
         except Exception as error:
             traceback.print_exc()
             start_error_menu(tray_icon)
+            exception_happened = True
 
         if monitor_stop_event.wait(CHECK_INTERVAL):
             break
