@@ -37,9 +37,7 @@ CHECK_INTERVAL: Final[float] = 5.0
 # ERROR_INTERVAL: Final[float] = 4.0
 
 part_limit: int = 100
-# TODO поменять здесь
-part_count: int = 0  # prod
-# part_count: int = 4  # test
+part_count: int = 0
 ncstudio_file_name: str = ""
 is_part_count_field_not_found: bool = False
 
@@ -62,8 +60,6 @@ is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 # добавить обработку исключения при парсе ncstudio_data.json - ✔
 # поменять размеры окон - ✔
 # проверить все на проде - ✔
-# python -m PyInstaller --onefile --console --name NCStudioPartControl ncstudio.py
-# python -m PyInstaller --onefile --noconsole --name NCStudioPartControl ncstudio.py
 # поменять все на прод обратно - ✔
 
 
@@ -109,11 +105,11 @@ def load_current_part_limit() -> int:
     return load_data_from_json()[CURRENT_PART_LIMIT]
 
 
-def load_data_on_startup() -> None:
+def set_current_limit() -> None:
     set_part_limit(load_current_part_limit())
 
 
-def show_completed_batches(
+def show_history_of_completed_batches(
         icon: Icon,
         item: MenuItem,
 ) -> None:
@@ -159,7 +155,7 @@ def load_completed_batches() -> list[CompletedBatch]:
     return load_data_from_json()[BATCHES]
 
 
-def save_completed_batch() -> None:
+def save_completed_batch_to_history() -> None:
     data: DataJson = load_data_from_json()
     batches: list[CompletedBatch] = data[BATCHES]
 
@@ -313,15 +309,13 @@ def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
 
     for index, element in enumerate(elements):
         text: str = element.window_text().strip()
-        # print(f"{index}: {text}")
-        if text.lower() in "part count:":
+
+        if text.lower() == "part count:":
             next_index: int = index + 1
-            # print(f"field: {text}")
             if next_index >= len(elements):
                 raise RuntimeError("index out of bounds")
 
             value_text: str = elements[next_index].window_text().strip()
-
             try:
                 return int(value_text)
             except ValueError:
@@ -375,10 +369,10 @@ def set_ncstudio_file_name(window: UIAWrapper) -> None:
 
 def get_normal_menu() -> pystray.Menu:
     return pystray.Menu(
-        # MenuItem(
-        #     text="Test +1 increment",
-        #     action=increase_test_count
-        # ),
+        MenuItem(
+            text="Test +1 increment",
+            action=increase_test_count
+        ),
         MenuItem(
             text="Задать лимит",
             action=open_limit_editor,
@@ -390,7 +384,7 @@ def get_normal_menu() -> pystray.Menu:
         ),
         MenuItem(
             text="Показать историю",
-            action=show_completed_batches
+            action=show_history_of_completed_batches
         ),
         pystray.Menu.SEPARATOR,
         MenuItem(
@@ -433,7 +427,7 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
                     current_part_count,
                     limit
                 )
-                save_completed_batch()
+                save_completed_batch_to_history()
                 set_part_count(0)
                 set_part_limit(100)
                 blocked = True
@@ -497,14 +491,10 @@ def increase_test_count(
         icon: Icon,
         item: MenuItem,
 ) -> None:
-    current_count: int = increment_part_count()
-    limit: int = get_part_limit()
-
     update_tray_title(icon)
-
     print(
-        f"Test Part Count: {current_count}, "
-        f"Limit: {limit}"
+        f"Test Part Count: {increment_part_count()}, "
+        f"Limit: {get_part_limit()}"
     )
 
 
@@ -558,7 +548,7 @@ def start_error_menu(tray_icon: Icon) -> None:
 
 
 def main() -> None:
-    load_data_on_startup()
+    set_current_limit()
     print(
         f"line: {inspect.currentframe().f_lineno}, ",
         f"path: {get_program_directory()}"
