@@ -60,8 +60,13 @@ is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 
 # проверять лимит не может быть меньше или равно парт каунту - ✔
 # добавить обработку исключения при парсе ncstudio_data.json - ✔
-# поменять размеры окон
-# поменять все на прод обратно
+# поменять размеры окон - ✔
+# проверить все на проде - ✔
+# pyinstaller --onefile --console NCStudioPartControl.py
+# pyinstaller --onefile --noconsole NCStudioPartControl.py
+# поменять все на прод обратно - ✔
+
+
 
 def get_program_directory() -> Path:
     if getattr(sys, "frozen", False):
