@@ -2,7 +2,6 @@ import inspect
 import json
 import string
 import sys
-from operator import truediv
 import traceback
 from pathlib import Path
 import threading
@@ -16,6 +15,9 @@ from pystray import Icon, MenuItem
 from pywinauto import Desktop
 from pywinauto.controls.uiawrapper import UIAWrapper
 
+type DataJson = dict[str, int | list[dict[str, int | str]]]
+
+CURRENT_PART_LIMIT: Final[string] = 'current_part_limit'
 CHECK_INTERVAL: Final[float] = 5.0
 # ERROR_INTERVAL: Final[float] = 4.0
 
@@ -45,17 +47,32 @@ def get_program_directory() -> Path:
     return Path(__file__).resolve().parent
 
 
-def load_data() -> dict:
+def load_data_from_json() -> dict:
     if not DATA_FILE.exists():
-        return {"batches": []}
+        return {
+            CURRENT_PART_LIMIT: 100,
+            "batches": []
+        }
     with DATA_FILE.open("r", encoding="utf-8") as file:
         return json.load(file)
 
-def save_data(data: dict) -> None:
+
+def save_data_to_json(data: dict) -> None:
     with DATA_FILE.open("w", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=4)
 
+
 DATA_FILE: Final[Path] = get_program_directory() / "ncstudio_data.json"
+
+
+def save_current_part_limit(current_part_limit: int) -> None:
+    data: DataJson = load_data_from_json()
+    data[CURRENT_PART_LIMIT] = current_part_limit
+    save_data_to_json(data)
+
+
+def load_current_part_limit() -> int:
+    return load_data_from_json()[CURRENT_PART_LIMIT]
 
 
 def get_part_limit() -> int:
@@ -173,7 +190,7 @@ def show_current_limit(
     ).start()
 
 
-def read_part_count(window: UIAWrapper) -> int:
+def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
     print(
         f"line: {inspect.currentframe().f_lineno}, "
         f"window: {window}")
@@ -236,16 +253,14 @@ def find_ncstudio_window() -> UIAWrapper:
 
 
 def monitor_ncstudio(tray_icon: Icon) -> None:
-    global part_count
     blocked: bool = False
     while not monitor_stop_event.is_set():
         try:
             window: UIAWrapper = find_ncstudio_window()
             # todo здесь поменять
-            # current_part_count: int = read_part_count(window) # prod
+            # current_part_count: int = read_part_count_from_ncstudio(window) # prod
             current_part_count: int = part_count  # test
 
-            set_part_count(current_part_count)
             limit: int = get_part_limit()
             update_tray_title(tray_icon)
 
@@ -376,10 +391,14 @@ def start_ui_menu() -> Icon:
 
 
 def main() -> None:
+    set_part_limit(load_current_part_limit())
     print(
         f"line: {inspect.currentframe().f_lineno}, ",
         f"path: {get_program_directory()}"
     )
+    print(
+        f"line: {inspect.currentframe().f_lineno}, "
+        f'ncstudio json - {load_data_from_json()}')
     tray_icon: Icon = start_ui_menu()
 
     monitor_thread: threading.Thread = threading.Thread(
