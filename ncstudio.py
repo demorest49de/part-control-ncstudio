@@ -95,6 +95,11 @@ def load_data_on_startup() -> None:
     set_part_limit(load_current_part_limit())
 
 
+def show_history() -> None:
+    print(
+        f"line: {inspect.currentframe().f_lineno}, "
+        f'')
+
 
 def save_completed_batch() -> None:
     data: DataJson = load_data_from_json()
@@ -293,13 +298,12 @@ def set_ncstudio_file_name(window: UIAWrapper) -> None:
     global ncstudio_file_name
     title: str = window.window_text().strip()
     print(
-                    f"line: {inspect.currentframe().f_lineno}, "
-                    f'{title}')
+        f"line: {inspect.currentframe().f_lineno}, "
+        f'{title}')
     ncstudio_file_name = title.rsplit(" - ", 1)[-1].strip()
     print(
-                    f"line: {inspect.currentframe().f_lineno}, "
-                    f'{ncstudio_file_name}')
-
+        f"line: {inspect.currentframe().f_lineno}, "
+        f'{ncstudio_file_name}')
 
 
 def monitor_ncstudio(tray_icon: Icon) -> None:
@@ -415,11 +419,15 @@ def start_ui_menu() -> Icon:
         MenuItem(
             text="Задать лимит",
             action=open_limit_editor,
+            default=True,
         ),
         MenuItem(
             text="Показать текущий лимит",
-            action=show_current_limit,
-            default=True,
+            action=show_current_limit
+        ),
+        MenuItem(
+            text="Показать историю",
+            action=show_history
         ),
         pystray.Menu.SEPARATOR,
         MenuItem(
