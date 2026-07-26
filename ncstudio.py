@@ -62,8 +62,8 @@ is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 # добавить обработку исключения при парсе ncstudio_data.json - ✔
 # поменять размеры окон - ✔
 # проверить все на проде - ✔
-# pyinstaller --onefile --console NCStudioPartControl.py
-# pyinstaller --onefile --noconsole NCStudioPartControl.py
+# python -m PyInstaller --onefile --console --name NCStudioPartControl ncstudio.py
+# python -m PyInstaller --onefile --noconsole --name NCStudioPartControl ncstudio.py
 # поменять все на прод обратно - ✔
 
 
