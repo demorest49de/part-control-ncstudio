@@ -17,14 +17,17 @@ from pystray import Icon, MenuItem
 from pywinauto import Desktop
 from pywinauto.controls.uiawrapper import UIAWrapper
 
+
 class CompletedBatch(TypedDict):
     date: str
     limit: int
     file_name: str
 
+
 class DataJson(TypedDict):
     CURRENT_PART_LIMIT: int
     BATCHES: list[CompletedBatch]
+
 
 CURRENT_PART_LIMIT: Final[string] = 'current_part_limit'
 BATCHES: Final[string] = 'batches'
@@ -86,6 +89,11 @@ def save_current_part_limit(current_part_limit: int) -> None:
 
 def load_current_part_limit() -> int:
     return load_data_from_json()[CURRENT_PART_LIMIT]
+
+
+def load_data_on_startup() -> None:
+    set_part_limit(load_current_part_limit())
+
 
 
 def save_completed_batch() -> None:
@@ -275,16 +283,24 @@ def find_ncstudio_window() -> UIAWrapper:
             print(
                 f"line: {inspect.currentframe().f_lineno}, "
                 f'window = {window}')
-            get_ncstudio_file_name(window)
+            set_ncstudio_file_name(window)
             return window
 
     raise RuntimeError("ncstudio window not found")
 
-def get_ncstudio_file_name(window: UIAWrapper) -> str:
+
+def set_ncstudio_file_name(window: UIAWrapper) -> None:
     global ncstudio_file_name
     title: str = window.window_text().strip()
+    print(
+                    f"line: {inspect.currentframe().f_lineno}, "
+                    f'{title}')
     ncstudio_file_name = title.rsplit(" - ", 1)[-1].strip()
-    return ncstudio_file_name
+    print(
+                    f"line: {inspect.currentframe().f_lineno}, "
+                    f'{ncstudio_file_name}')
+
+
 
 def monitor_ncstudio(tray_icon: Icon) -> None:
     blocked: bool = False
@@ -426,7 +442,7 @@ def start_ui_menu() -> Icon:
 
 
 def main() -> None:
-
+    load_data_on_startup()
     print(
         f"line: {inspect.currentframe().f_lineno}, ",
         f"path: {get_program_directory()}"
