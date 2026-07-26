@@ -453,10 +453,10 @@ def increase_test_count(
 def start_ui_menu() -> Icon:
     tray_menu: pystray.Menu = pystray.Menu(
 
-        MenuItem(
-            text="Test +1 increment",
-            action=increase_test_count
-        ),
+        # MenuItem(
+        #     text="Test +1 increment",
+        #     action=increase_test_count
+        # ),
         MenuItem(
             text="Задать лимит",
             action=open_limit_editor,
