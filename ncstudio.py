@@ -22,7 +22,9 @@ class CompletedBatch(TypedDict):
     limit: int
     file_name: str
 
-type DataJson = dict[str, int | list[CompletedBatch]]
+class DataJson(TypedDict):
+    CURRENT_PART_LIMIT: int
+    BATCHES: list[CompletedBatch]
 
 CURRENT_PART_LIMIT: Final[string] = 'current_part_limit'
 BATCHES: Final[string] = 'batches'
@@ -33,6 +35,7 @@ part_limit: int = 100
 # TODO поменять здесь
 # part_count: int = 0 #prod
 part_count: int = 4  # test
+ncstudio_file_name: str = ""
 
 monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
@@ -44,9 +47,11 @@ part_count_lock: threading.Lock = threading.Lock()
 
 # ворнинг должен отображатся первым слоем - ✔
 
-# сохранять данные
+# сохранять данные - ✔
 # - лимиты
 # - название файла программы с датастемпом что бы была история
+
+# проверять лимит не может быть меньше или равно парт каунту
 
 def get_program_directory() -> Path:
     if getattr(sys, "frozen", False):
@@ -83,15 +88,16 @@ def load_current_part_limit() -> int:
     return load_data_from_json()[CURRENT_PART_LIMIT]
 
 
-def save_completed_batch(limit: int, file_name: str) -> None:
+def save_completed_batch() -> None:
     data: DataJson = load_data_from_json()
+    batches: list[CompletedBatch] = data[BATCHES]
 
     batch: CompletedBatch = {
         "date": datetime.now().strftime("%d-%m-%Y %H:%M"),
-        "limit": limit,
-        "file_name": file_name,
+        "limit": get_part_limit(),
+        "file_name": ncstudio_file_name,
     }
-    data[BATCHES].append(batch)
+    batches.insert(0, batch)
     save_data_to_json(data)
 
 
@@ -269,10 +275,16 @@ def find_ncstudio_window() -> UIAWrapper:
             print(
                 f"line: {inspect.currentframe().f_lineno}, "
                 f'window = {window}')
+            get_ncstudio_file_name(window)
             return window
 
     raise RuntimeError("ncstudio window not found")
 
+def get_ncstudio_file_name(window: UIAWrapper) -> str:
+    global ncstudio_file_name
+    title: str = window.window_text().strip()
+    ncstudio_file_name = title.rsplit(" - ", 1)[-1].strip()
+    return ncstudio_file_name
 
 def monitor_ncstudio(tray_icon: Icon) -> None:
     blocked: bool = False
@@ -297,6 +309,7 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
                     current_part_count,
                     limit
                 )
+                save_completed_batch()
                 set_part_count(0)
                 set_part_limit(100)
                 blocked = True
