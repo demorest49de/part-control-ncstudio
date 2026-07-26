@@ -259,7 +259,9 @@ def update_tray_title(tray_icon: Icon) -> None:
         f"Количество сделанных листов: {get_part_count()}\n"
         f"Текущий лимит листов: {get_part_limit()}"
     )
-
+    print(
+            f"line: {inspect.currentframe().f_lineno}, "
+            f' - {tray_icon.title}')
 
 def open_limit_editor(
         icon: Icon,
@@ -299,21 +301,15 @@ def show_current_limit(
 
 
 def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
-    global is_part_count_field_found
-    print(
-        f"line: {inspect.currentframe().f_lineno}, "
-        f"window: {window}")
+
     elements: list[UIAWrapper] = window.descendants()
-    print(
-        f"line: {inspect.currentframe().f_lineno}, "
-        f'elements - {elements}')
     if not elements:
         raise RuntimeError(f"elements: {elements} are empty or not found")
 
     for index, element in enumerate(elements):
         text: str = element.window_text().strip()
         # print(f"{index}: {text}")
-        if text.lower() in ("part count:", "part count:"):
+        if text.lower() in "part count:":
             next_index: int = index + 1
             # print(f"field: {text}")
             if next_index >= len(elements):
@@ -369,24 +365,47 @@ def find_ncstudio_window() -> UIAWrapper:
 def set_ncstudio_file_name(window: UIAWrapper) -> None:
     global ncstudio_file_name
     title: str = window.window_text().strip()
-    print(
-        f"line: {inspect.currentframe().f_lineno}, "
-        f'{title}')
     ncstudio_file_name = title.rsplit(" - ", 1)[-1].strip()
-    print(
-        f"line: {inspect.currentframe().f_lineno}, "
-        f'{ncstudio_file_name}')
 
+def get_normal_menu() -> pystray.Menu:
+    return pystray.Menu(
+        # MenuItem(
+        #     text="Test +1 increment",
+        #     action=increase_test_count
+        # ),
+        MenuItem(
+            text="Задать лимит",
+            action=open_limit_editor,
+            default=True,
+        ),
+        MenuItem(
+            text="Показать текущий лимит",
+            action=show_current_limit
+        ),
+        MenuItem(
+            text="Показать историю",
+            action=show_completed_batches
+        ),
+        pystray.Menu.SEPARATOR,
+        MenuItem(
+            text="Выход",
+            action=exit_program
+        ),
+    )
 
 def monitor_ncstudio(tray_icon: Icon) -> None:
     blocked: bool = False
+    menu: pystray.Menu = get_normal_menu()
+    normal_tray_menu(tray_icon, menu)
+    print(
+            f"line: {inspect.currentframe().f_lineno}, "
+            f' - {tray_icon.title}')
     while not monitor_stop_event.is_set():
         try:
             window: UIAWrapper = find_ncstudio_window()
             # todo здесь поменять
             current_part_count: int = read_part_count_from_ncstudio(window)  # prod
-            # current_part_count: int = part_count  # test
-
+            current_part_count: int = part_count  # test
             limit: int = get_part_limit()
             update_tray_title(tray_icon)
 
@@ -475,25 +494,18 @@ def increase_test_count(
     )
 
 
+def normal_tray_menu(tray_icon: Icon, menu: pystray.Menu) -> Icon:
+    tray_icon.menu = menu
+
+    tray_icon.title = "Идет обновление..."
+
+
 def start_tray_menu() -> Icon:
     tray_menu: pystray.Menu = pystray.Menu(
-
-        # MenuItem(
-        #     text="Test +1 increment",
-        #     action=increase_test_count
-        # ),
         MenuItem(
-            text="Задать лимит",
-            action=open_limit_editor,
-            default=True,
-        ),
-        MenuItem(
-            text="Показать текущий лимит",
-            action=show_current_limit
-        ),
-        MenuItem(
-            text="Показать историю",
-            action=show_completed_batches
+            text="Проверяем ncstudio...",
+            action=None,
+            enabled=False,
         ),
         pystray.Menu.SEPARATOR,
         MenuItem(
@@ -506,8 +518,7 @@ def start_tray_menu() -> Icon:
         name="ncstudio_part_counter",
         icon=create_tray_image(),
         title=(
-            f"Количество сделанных листов: {get_part_count()}\n"
-            f"Текущий лимит листов: {get_part_limit()}"
+            f"Проверяем ncstudio..."
         ),
         menu=tray_menu,
     )
