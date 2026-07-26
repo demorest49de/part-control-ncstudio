@@ -1,4 +1,8 @@
+import inspect
+import string
 import sys
+from operator import truediv
+import traceback
 from pathlib import Path
 import threading
 import tkinter as tk
@@ -11,11 +15,14 @@ from pystray import Icon, MenuItem
 from pywinauto import Desktop
 from pywinauto.controls.uiawrapper import UIAWrapper
 
-CHECK_INTERVAL: Final[float] = 10.0
-ERROR_INTERVAL: Final[float] = 10.0
+CHECK_INTERVAL: Final[float] = 5.0
+# ERROR_INTERVAL: Final[float] = 4.0
 
 part_limit: int = 100
-part_count: int = 0
+# TODO поменять здесь
+# part_count: int = 0 #prod
+part_count: int = 4  # test
+
 monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
@@ -35,6 +42,7 @@ def get_program_directory() -> Path:
         return Path(sys.executable).resolve().parent
 
     return Path(__file__).resolve().parent
+
 
 def get_part_limit() -> int:
     with limit_lock:
@@ -96,11 +104,11 @@ def show_limit_editor(icon: Icon) -> None:
     if new_limit is not None:
         set_part_limit(new_limit)
 
-        messagebox.showinfo(
-            "Лимит изменён",
-            f"Новый лимит партии: {new_limit}",
-            parent=root,
-        )
+        # messagebox.showinfo(
+        #     "Лимит изменён",
+        #     f"Новый лимит партии: {new_limit}",
+        #     parent=root,
+        # )
 
         update_tray_title(tray_icon=icon)
 
@@ -152,7 +160,9 @@ def show_current_limit(
 
 
 def read_part_count(window: UIAWrapper) -> int:
-    print(f"window: {window}")
+    print(
+        f"line: {inspect.currentframe().f_lineno}, "
+        f"window: {window}")
     elements: list[UIAWrapper] = window.descendants()
     if not elements:
         raise RuntimeError(f"elements: {elements} are empty or not found")
@@ -179,14 +189,33 @@ def read_part_count(window: UIAWrapper) -> int:
 
 
 def find_ncstudio_window() -> UIAWrapper:
-    # todo здесь поменять
-    desktop: Desktop = Desktop(backend="uia")
-    # desktop: Desktop = Desktop(backend="win32")
+    desktopUIA: Desktop = Desktop(backend="uia")
+    desktopWin32: Desktop = Desktop(backend="win32")
+    is_testing: bool = True
 
-    for window in desktop.windows():
-        title: str = window.window_text()
-        print(f"Window: {title!r}")
-        if "ncstudio" in title.lower() and "config" in title.lower():
+    desktops: list[Desktop] = [desktopUIA, desktopWin32]
+
+    for desktop in desktops:
+        window = next(
+            (
+                window
+                for window in desktop.windows()
+                if (
+                           "ncstudio" in (
+                       title := window.window_text().lower()
+                   )
+                           and "config" in title
+                   ) or (
+                           is_testing
+                           and "ncstudio ad." in title
+                   )
+            ),
+            None,
+        )
+        if window:
+            print(
+                f"line: {inspect.currentframe().f_lineno}, "
+                f'window = {window}')
             return window
 
     raise RuntimeError("ncstudio window not found")
@@ -197,15 +226,17 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
     blocked: bool = False
     while not monitor_stop_event.is_set():
         try:
-            # todo здесь поменять
             window: UIAWrapper = find_ncstudio_window()
-            current_part_count: int = read_part_count(window)
+            # todo здесь поменять
+            # current_part_count: int = read_part_count(window) # prod
+            current_part_count: int = part_count  # test
+
             set_part_count(current_part_count)
-            # current_part_count: int = get_part_count()
             limit: int = get_part_limit()
             update_tray_title(tray_icon)
 
             print(
+                f"line: {inspect.currentframe().f_lineno}, "
                 f"Part Count: {current_part_count}, "
                 f"Limit: {limit}"
             )
@@ -224,14 +255,15 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
 
 
         except Exception as error:
-            print(
-                f"Error: {type(error).__name__}: {error!r}"
-            )
+            traceback.print_exc()
+            # print(
+            #     f"Error: {type(error).__name__}: {error!r}"
+            # )
 
-            if monitor_stop_event.wait(ERROR_INTERVAL):
-                break
-
-            continue
+            # if monitor_stop_event.wait(ERROR_INTERVAL):
+            #     break
+            #
+            # continue
 
         if monitor_stop_event.wait(CHECK_INTERVAL):
             break
@@ -292,7 +324,8 @@ def increase_test_count(
         f"Limit: {limit}"
     )
 
-def start_ui_menu()-> Icon:
+
+def start_ui_menu() -> Icon:
     tray_menu: pystray.Menu = pystray.Menu(
 
         MenuItem(
@@ -327,9 +360,12 @@ def start_ui_menu()-> Icon:
 
     return tray_icon
 
-def main() -> None:
 
-    print(f"path: {get_program_directory()}")
+def main() -> None:
+    print(
+        f"line: {inspect.currentframe().f_lineno}, ",
+        f"path: {get_program_directory()}"
+    )
     tray_icon: Icon = start_ui_menu()
 
     monitor_thread: threading.Thread = threading.Thread(
@@ -342,7 +378,6 @@ def main() -> None:
 
     tray_icon.run()
 
-    print(f"path: {get_program_directory()}")
 
 if __name__ == "__main__":
     main()
