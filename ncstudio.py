@@ -38,13 +38,15 @@ CHECK_INTERVAL: Final[float] = 5.0
 
 part_limit: int = 100
 # TODO поменять здесь
-# part_count: int = 0 #prod
-part_count: int = 4  # test
+part_count: int = 0  # prod
+# part_count: int = 4  # test
 ncstudio_file_name: str = ""
+is_part_count_field_not_found: bool = False
 
 monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
+is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 
 
 # set_part_limit при установке не срабатывает  отображается
@@ -57,6 +59,7 @@ part_count_lock: threading.Lock = threading.Lock()
 #   - название файла программы с датастемпом что бы была история
 
 # проверять лимит не может быть меньше или равно парт каунту - ✔
+# добавить обработку исключения при парсе ncstudio_data.json - ✔
 # поменять размеры окон
 # поменять все на прод обратно
 
@@ -190,6 +193,13 @@ def set_part_count(new_count: int) -> None:
         part_count = new_count
 
 
+def set_is_part_count_field_not_found(is_found: bool) -> None:
+    global is_part_count_field_not_found
+
+    with is_part_count_field_not_found_lock:
+        is_part_count_field_not_found = is_found
+
+
 def show_limit_warning(count: int, limit: int) -> None:
     root: tk.Tk = tk.Tk()
 
@@ -218,7 +228,7 @@ def show_limit_editor(icon: Icon) -> None:
     while True:
         new_limit: int | None = simpledialog.askinteger(
             "Лимит партии",
-            "Введите количество деталей:",
+            "Введите количество деталей:                              ",
             initialvalue=current_limit,
             minvalue=1,
             maxvalue=100,
@@ -289,10 +299,14 @@ def show_current_limit(
 
 
 def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
+    global is_part_count_field_found
     print(
         f"line: {inspect.currentframe().f_lineno}, "
         f"window: {window}")
     elements: list[UIAWrapper] = window.descendants()
+    print(
+        f"line: {inspect.currentframe().f_lineno}, "
+        f'elements - {elements}')
     if not elements:
         raise RuntimeError(f"elements: {elements} are empty or not found")
 
@@ -314,6 +328,7 @@ def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
                     f"Значение Part Count не является целым числом: {value_text!r}"
                 )
 
+    set_is_part_count_field_not_found(True)
     raise RuntimeError("part count field not found")
 
 
@@ -369,8 +384,8 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
         try:
             window: UIAWrapper = find_ncstudio_window()
             # todo здесь поменять
-            # current_part_count: int = read_part_count_from_ncstudio(window) # prod
-            current_part_count: int = part_count  # test
+            current_part_count: int = read_part_count_from_ncstudio(window)  # prod
+            # current_part_count: int = part_count  # test
 
             limit: int = get_part_limit()
             update_tray_title(tray_icon)
@@ -397,14 +412,7 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
 
         except Exception as error:
             traceback.print_exc()
-            # print(
-            #     f"Error: {type(error).__name__}: {error!r}"
-            # )
-
-            # if monitor_stop_event.wait(ERROR_INTERVAL):
-            #     break
-            #
-            # continue
+            start_error_menu(tray_icon)
 
         if monitor_stop_event.wait(CHECK_INTERVAL):
             break
@@ -450,6 +458,7 @@ def increment_part_count() -> int:
         part_count += 1
         return part_count
 
+
 # test potom udalit' poka ostavit'
 def increase_test_count(
         icon: Icon,
@@ -466,7 +475,7 @@ def increase_test_count(
     )
 
 
-def start_ui_menu() -> Icon:
+def start_tray_menu() -> Icon:
     tray_menu: pystray.Menu = pystray.Menu(
 
         # MenuItem(
@@ -506,6 +515,23 @@ def start_ui_menu() -> Icon:
     return tray_icon
 
 
+def start_error_menu(tray_icon: Icon) -> None:
+    tray_icon.menu = pystray.Menu(
+        MenuItem(
+            text="Что-то пошло не так...",
+            action=None,
+            enabled=False,
+        ),
+        pystray.Menu.SEPARATOR,
+        MenuItem(
+            text="Выход",
+            action=exit_program
+        ),
+    )
+
+    tray_icon.title = 'Что-то пошло не так...'
+
+
 def main() -> None:
     load_data_on_startup()
     print(
@@ -513,7 +539,7 @@ def main() -> None:
         f"path: {get_program_directory()}"
     )
 
-    tray_icon: Icon = start_ui_menu()
+    tray_icon: Icon = start_tray_menu()
 
     monitor_thread: threading.Thread = threading.Thread(
         target=monitor_ncstudio,
