@@ -52,10 +52,12 @@ part_count_lock: threading.Lock = threading.Lock()
 # ворнинг должен отображатся первым слоем - ✔
 
 # сохранять данные - ✔
-# - лимиты
-# - название файла программы с датастемпом что бы была история
+#   - лимиты
+#   - название файла программы с датастемпом что бы была история
 
 # проверять лимит не может быть меньше или равно парт каунту
+# поменять размеры окон
+# поменять все на прод обратно
 
 def get_program_directory() -> Path:
     if getattr(sys, "frozen", False):
@@ -67,7 +69,7 @@ def get_program_directory() -> Path:
 def load_data_from_json() -> dict:
     if not DATA_FILE.exists():
         return {
-            CURRENT_PART_LIMIT: 90,
+            CURRENT_PART_LIMIT: part_limit,
             BATCHES: []
         }
     with DATA_FILE.open("r", encoding="utf-8") as file:
@@ -199,31 +201,38 @@ def show_limit_warning(count: int, limit: int) -> None:
 
 def show_limit_editor(icon: Icon) -> None:
     current_limit: int = get_part_limit()
+    current_part_count: int = get_part_count()
 
     root: tk.Tk = tk.Tk()
 
     root.withdraw()
     root.attributes("-topmost", True)
 
-    new_limit: int | None = simpledialog.askinteger(
-        "Лимит партии",
-        "Введите количество деталей:",
-        initialvalue=current_limit,
-        minvalue=1,
-        maxvalue=100,
-        parent=root,
-    )
+    while True:
+        new_limit: int | None = simpledialog.askinteger(
+            "Лимит партии",
+            "Введите количество деталей:",
+            initialvalue=current_limit,
+            minvalue=1,
+            maxvalue=100,
+            parent=root,
+        )
 
-    if new_limit is not None:
+        if new_limit is None:
+            break;
+
+        if new_limit <= current_part_count:
+            messagebox.showinfo(
+                "Неверный лимит",
+                f"Новый лимит {new_limit} не может быть меньше\n"
+                f"либо равен количеству изготовленныйх деталей {current_part_count}",
+                parent=root,
+            )
+            continue
+
         set_part_limit(new_limit)
-
-        # messagebox.showinfo(
-        #     "Лимит изменён",
-        #     f"Новый лимит партии: {new_limit}",
-        #     parent=root,
-        # )
-
         update_tray_title(tray_icon=icon)
+        break
 
     root.destroy()
 
