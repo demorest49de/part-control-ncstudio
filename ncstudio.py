@@ -11,6 +11,7 @@ from tkinter import messagebox, simpledialog
 from tkinter import scrolledtext
 from typing import Final
 from typing import TypedDict
+from json import JSONDecodeError
 
 import pystray
 from PIL import Image, ImageDraw
@@ -72,8 +73,14 @@ def load_data_from_json() -> dict:
             CURRENT_PART_LIMIT: part_limit,
             BATCHES: []
         }
-    with DATA_FILE.open("r", encoding="utf-8") as file:
-        return json.load(file)
+    try:
+        with DATA_FILE.open("r", encoding="utf-8") as file:
+            return json.load(file)
+    except JSONDecodeError:
+        return {
+            CURRENT_PART_LIMIT: 100,
+            BATCHES: []
+        }
 
 
 def save_data_to_json(data: dict) -> None:
@@ -443,7 +450,7 @@ def increment_part_count() -> int:
         part_count += 1
         return part_count
 
-
+# test potom udalit' poka ostavit'
 def increase_test_count(
         icon: Icon,
         item: MenuItem,
@@ -505,10 +512,6 @@ def main() -> None:
         f"line: {inspect.currentframe().f_lineno}, ",
         f"path: {get_program_directory()}"
     )
-
-    print(
-        f"line: {inspect.currentframe().f_lineno}, "
-        f'ncstudio json - {load_data_from_json()}')
 
     tray_icon: Icon = start_ui_menu()
 
