@@ -406,10 +406,10 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
         try:
             window: UIAWrapper = find_ncstudio_window()
             # todo здесь поменять
-            # current_part_count: int = read_part_count_from_ncstudio(window)  # prod
-            # set_part_count(current_part_count)  # prod
+            current_part_count: int = read_part_count_from_ncstudio(window)  # prod
 
-            current_part_count: int = part_count  # test
+            # set_part_count(current_part_count)  # to delete
+            # current_part_count: int = part_count  # test
 
             if exception_happened:
                 normal_tray_menu(tray_icon, menu)
