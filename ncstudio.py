@@ -406,8 +406,10 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
         try:
             window: UIAWrapper = find_ncstudio_window()
             # todo здесь поменять
-            current_part_count: int = read_part_count_from_ncstudio(window)  # prod
-            # current_part_count: int = part_count  # test
+            # current_part_count: int = read_part_count_from_ncstudio(window)  # prod
+            # set_part_count(current_part_count)  # prod
+
+            current_part_count: int = part_count  # test
 
             if exception_happened:
                 normal_tray_menu(tray_icon, menu)
@@ -418,8 +420,8 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
 
             print(
                 f"line: {inspect.currentframe().f_lineno}, "
-                f"Part Count: {current_part_count}, "
-                f"Limit: {limit}"
+                f"Part Count: {get_part_count()}, "
+                f"Limit: {get_part_limit()}"
             )
 
             if current_part_count >= limit and not blocked:
@@ -491,9 +493,10 @@ def increase_test_count(
         icon: Icon,
         item: MenuItem,
 ) -> None:
+    increment_part_count()
     update_tray_title(icon)
     print(
-        f"Test Part Count: {increment_part_count()}, "
+        f"Part Count: {get_part_count()}, "
         f"Limit: {get_part_limit()}"
     )
 
