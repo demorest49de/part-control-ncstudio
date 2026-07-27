@@ -407,8 +407,8 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
             window: UIAWrapper = find_ncstudio_window()
             # todo здесь поменять
             current_part_count: int = read_part_count_from_ncstudio(window)  # prod
+            set_part_count(current_part_count)  # prod
 
-            # set_part_count(current_part_count)  # to delete
             # current_part_count: int = part_count  # test
 
             if exception_happened:
