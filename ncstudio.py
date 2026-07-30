@@ -369,10 +369,11 @@ def set_ncstudio_file_name(window: UIAWrapper) -> None:
 
 def get_normal_menu() -> pystray.Menu:
     return pystray.Menu(
-        MenuItem(
-            text="Test +1 increment",
-            action=increase_test_count
-        ),
+        # test
+        # MenuItem(
+        #     text="Test +1 increment",
+        #     action=increase_test_count
+        # ),
         MenuItem(
             text="Задать лимит",
             action=open_limit_editor,
