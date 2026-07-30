@@ -33,7 +33,8 @@ class DataJson(TypedDict):
 
 CURRENT_PART_LIMIT: Final[string] = 'current_part_limit'
 BATCHES: Final[string] = 'batches'
-CHECK_INTERVAL: Final[float] = 10.0
+CHECK_INTERVAL: Final[float] = 5.0
+ERROR_INTERVAL: Final[float] = 10.0
 
 
 part_limit: int = 100
@@ -443,6 +444,10 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
             traceback.print_exc()
             start_error_menu(tray_icon)
             exception_happened = True
+
+            if monitor_stop_event.wait(ERROR_INTERVAL):
+                break
+            continue
 
         if monitor_stop_event.wait(CHECK_INTERVAL):
             break
