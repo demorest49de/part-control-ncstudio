@@ -40,6 +40,8 @@ ERROR_INTERVAL: Final[float] = 20.0
 part_limit: int = 100
 part_count: int = 0
 ncstudio_file_name: str = ""
+part_count_value_element: UIAWrapper | None = None
+
 is_part_count_field_not_found: bool = False
 
 monitor_stop_event: threading.Event = threading.Event()
@@ -62,6 +64,8 @@ is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 # поменять размеры окон - ✔
 # проверить все на проде - ✔
 # поменять все на прод обратно - ✔
+# set_is_part_count_field_not_found - проверить убрать?
+
 
 
 
