@@ -8,6 +8,9 @@ class FakeUIAWrapper:
     def window_text(self) -> str:
         return self.text
 
+    def set_text(self, text: str) -> None:
+        self.text = text
+
 
 
 fake_elements: list[FakeUIAWrapper] = [

@@ -1,4 +1,4 @@
-from FakeUIAWrapper import fake_elements
+from FakeUIAWrapper import fake_elements, FakeUIAWrapper
 from typing import cast
 from datetime import datetime
 import inspect
@@ -35,8 +35,8 @@ class DataJson(TypedDict):
 
 CURRENT_PART_LIMIT: Final[string] = 'current_part_limit'
 BATCHES: Final[string] = 'batches'
-CHECK_INTERVAL: Final[float] = 6.0
-ERROR_INTERVAL: Final[float] = 6.0
+CHECK_INTERVAL: Final[float] = 10.0
+# ERROR_INTERVAL: Final[float] = 15.0
 
 
 part_limit: int = 100
@@ -49,6 +49,8 @@ part_count_value_index: int | None = None
 monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
+
+
 # is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 
 
@@ -67,8 +69,6 @@ part_count_lock: threading.Lock = threading.Lock()
 # проверить все на проде - ✔
 # поменять все на прод обратно - ✔
 # set_is_part_count_field_not_found - проверить убрать?
-
-
 
 
 def get_program_directory() -> Path:
@@ -313,17 +313,18 @@ def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
     global part_count_value_index
 
     # todo поменять здесь
-    # elements: list[UIAWrapper] = window.descendants() # prod
-    elements = fake_elements # test
+    elements: list[UIAWrapper] = window.descendants() # prod
+    # elements = fake_elements  # test
 
     if not elements:
         raise RuntimeError(f"elements: {elements} are empty or not found")
 
-    if part_count_value_index is not None:
+    if (part_count_value_index is not None
+            and elements[part_count_value_index - 1].window_text().strip().lower() == "part count:"):
         try:
             value_text: str = elements[part_count_value_index].window_text().strip()
             return int(value_text)
-        except Exception:
+        except ValueError:
             part_count_value_index = None
 
     for index, element in enumerate(elements):
@@ -392,7 +393,7 @@ def get_normal_menu() -> pystray.Menu:
         # test
         # MenuItem(
         #     text="Test +1 increment",
-        #     action=increase_test_count
+        #     action=test_increase_test_count
         # ),
         MenuItem(
             text="Задать лимит",
@@ -464,9 +465,9 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
             start_error_menu(tray_icon)
             exception_happened = True
 
-            if monitor_stop_event.wait(ERROR_INTERVAL):
-                break
-            continue
+            # if monitor_stop_event.wait(ERROR_INTERVAL):
+            #     break
+            # continue
 
         if monitor_stop_event.wait(CHECK_INTERVAL):
             break
@@ -505,20 +506,21 @@ def exit_program(
     icon.stop()
 
 
-def increment_part_count() -> int:
-    global part_count
+def test_increment_part_count() -> None:
+    text_value = cast(FakeUIAWrapper, fake_elements[part_count_value_index]).window_text().strip()
+    try:
+        int_value: int = int(text_value)
+        int_value += 1
+        cast(FakeUIAWrapper, fake_elements[part_count_value_index]).set_text(str(int_value))
+    except ValueError:
+        int_value = 0
 
-    with part_count_lock:
-        part_count += 1
-        return part_count
 
-
-# test potom udalit' poka ostavit'
-def increase_test_count(
+def test_increase_test_count(
         icon: Icon,
         item: MenuItem,
 ) -> None:
-    increment_part_count()
+    test_increment_part_count()
     update_tray_title(icon)
     print(
         f"Part Count: {get_part_count()}, "
