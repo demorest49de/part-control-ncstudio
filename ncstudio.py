@@ -1,3 +1,5 @@
+from FakeUIAWrapper import fake_elements
+from typing import cast
 from datetime import datetime
 import inspect
 import json
@@ -40,14 +42,14 @@ ERROR_INTERVAL: Final[float] = 20.0
 part_limit: int = 100
 part_count: int = 0
 ncstudio_file_name: str = ""
-part_count_value_element: UIAWrapper | None = None
+part_count_value_index: int | None = None
 
-is_part_count_field_not_found: bool = False
+# is_part_count_field_not_found: bool = False
 
 monitor_stop_event: threading.Event = threading.Event()
 limit_lock: threading.Lock = threading.Lock()
 part_count_lock: threading.Lock = threading.Lock()
-is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
+# is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 
 
 # set_part_limit при установке не срабатывает  отображается
@@ -199,11 +201,11 @@ def set_part_count(new_count: int) -> None:
         part_count = new_count
 
 
-def set_is_part_count_field_not_found(is_found: bool) -> None:
-    global is_part_count_field_not_found
-
-    with is_part_count_field_not_found_lock:
-        is_part_count_field_not_found = is_found
+# def set_is_part_count_field_not_found(is_found: bool) -> None:
+#     global is_part_count_field_not_found
+#
+#     with is_part_count_field_not_found_lock:
+#         is_part_count_field_not_found = is_found
 
 
 def show_limit_warning(count: int, limit: int) -> None:
@@ -308,9 +310,21 @@ def show_current_limit(
 
 
 def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
-    elements: list[UIAWrapper] = window.descendants()
+    global part_count_value_index
+
+    # todo поменять здесь
+    # elements: list[UIAWrapper] = window.descendants() # prod
+    elements = fake_elements # test
+
     if not elements:
         raise RuntimeError(f"elements: {elements} are empty or not found")
+
+    if part_count_value_index is not None:
+        try:
+            value_text: str = elements[part_count_value_index].window_text().strip()
+            return int(value_text)
+        except Exception:
+            part_count_value_index = None
 
     for index, element in enumerate(elements):
         text: str = element.window_text().strip()
@@ -320,7 +334,8 @@ def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
             if next_index >= len(elements):
                 raise RuntimeError("index out of bounds")
 
-            value_text: str = elements[next_index].window_text().strip()
+            part_count_value_index = next_index
+            value_text: str = cast(str, elements[part_count_value_index].window_text()).strip()
             try:
                 return int(value_text)
             except ValueError:
@@ -328,7 +343,7 @@ def read_part_count_from_ncstudio(window: UIAWrapper) -> int:
                     f"Значение Part Count не является целым числом: {value_text!r}"
                 )
 
-    set_is_part_count_field_not_found(True)
+    # set_is_part_count_field_not_found(True)
     raise RuntimeError("part count field not found")
 
 
