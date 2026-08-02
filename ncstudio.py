@@ -35,8 +35,8 @@ class DataJson(TypedDict):
 
 CURRENT_PART_LIMIT: Final[string] = 'current_part_limit'
 BATCHES: Final[string] = 'batches'
-CHECK_INTERVAL: Final[float] = 7.0
-ERROR_INTERVAL: Final[float] = 20.0
+CHECK_INTERVAL: Final[float] = 6.0
+ERROR_INTERVAL: Final[float] = 6.0
 
 
 part_limit: int = 100
