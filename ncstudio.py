@@ -396,7 +396,7 @@ def get_normal_menu() -> pystray.Menu:
         #     action=test_increase_test_count
         # ),
         MenuItem(
-            text="Задать лимит",
+            text="Задать лимит и Всего",
             action=open_limit_editor,
             default=True,
         ),
@@ -420,7 +420,7 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
     blocked: bool = False
     exception_happened: bool = False
     menu: pystray.Menu = get_normal_menu()
-    normal_tray_menu(tray_icon, menu)
+    initial_tray_menu(tray_icon, menu)
     print(
         f"line: {inspect.currentframe().f_lineno}, "
         f' - {tray_icon.title}')
@@ -434,7 +434,7 @@ def monitor_ncstudio(tray_icon: Icon) -> None:
             # current_part_count: int = part_count  # test
 
             if exception_happened:
-                normal_tray_menu(tray_icon, menu)
+                initial_tray_menu(tray_icon, menu)
                 exception_happened = False
 
             limit: int = get_part_limit()
@@ -528,7 +528,7 @@ def test_increase_test_count(
     # )
 
 
-def normal_tray_menu(tray_icon: Icon, menu: pystray.Menu) -> Icon:
+def initial_tray_menu(tray_icon: Icon, menu: pystray.Menu) -> Icon:
     tray_icon.menu = menu
 
     tray_icon.title = "Идет обновление..."
