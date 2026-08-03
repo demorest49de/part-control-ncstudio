@@ -229,9 +229,40 @@ def show_limit_editor(icon: Icon) -> None:
     current_part_count: int = get_part_count()
 
     root: tk.Tk = tk.Tk()
-
-    root.withdraw()
+    root.title("Лимит партии")
     root.attributes("-topmost", True)
+    root.resizable(False, False)
+
+    tk.Label(root, text="Лимит:").grid(
+        row=0,
+        column=0,
+        padx=10,
+        pady=10
+    )
+
+    limit_entry: tk.Entry = tk.Entry(root)
+    limit_entry.insert(0, str(current_limit))
+    limit_entry.grid(
+        row=0,
+        column=1,
+        padx=10,
+        pady=10,
+    )
+
+    tk.Label(root, text="Всего:").grid(
+        row=1,
+        column=0,
+        padx=10,
+        pady=10,
+    )
+
+    total_entry: tk.Entry = tk.Entry(root)
+    total_entry.grid(
+        row=1,
+        column=1,
+        padx=10,
+        pady=10,
+    )
 
     while True:
         new_limit: int | None = simpledialog.askinteger(
