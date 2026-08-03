@@ -50,7 +50,7 @@ part_count_lock: threading.Lock = threading.Lock()
 is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 
 
-# set_part_limit при установке не срабатывает  отображается
+# set_part_limit при установке не срабатывает  отображается - ✔
 # разная цифра лимита в инфо по лимиту - ✔
 
 # ворнинг должен отображатся первым слоем - ✔
@@ -64,7 +64,7 @@ is_part_count_field_not_found_lock: threading.Lock = threading.Lock()
 # поменять размеры окон - ✔
 # проверить все на проде - ✔
 # поменять все на прод обратно - ✔
-# set_is_part_count_field_not_found - проверить убрать?
+# set_is_part_count_field_not_found - проверить убрать? - ✔
 
 
 
@@ -505,10 +505,10 @@ def increase_test_count(
 ) -> None:
     increment_part_count()
     update_tray_title(icon)
-    print(
-        f"Part Count: {get_part_count()}, "
-        f"Limit: {get_part_limit()}"
-    )
+    # print(
+    #     f"Part Count: {get_part_count()}, "
+    #     f"Limit: {get_part_limit()}"
+    # )
 
 
 def normal_tray_menu(tray_icon: Icon, menu: pystray.Menu) -> Icon:
